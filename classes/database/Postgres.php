@@ -7220,13 +7220,17 @@ class Postgres extends ADODB_base {
 	 * @return A recordset
 	 */
 	function getProcesses($database = null) {
+		$agostmt = "date_trunc('seconds', now() - query_start) as started_ago";
 		if ($database === null)
-			$sql = "SELECT * FROM pg_catalog.pg_stat_activity ORDER BY datname, usename, procpid";
+			$sql = "
+				SELECT *, $agostmt FROM pg_catalog.pg_stat_activity
+				ORDER BY waiting desc, current_query = '<IDLE>', datname, usename, procpid";
 		else {
 			$this->clean($database);
-		$sql = "
-				SELECT * FROM pg_catalog.pg_stat_activity
-				WHERE datname='{$database}' ORDER BY usename, procpid";
+			$sql = "
+				SELECT *, $agostmt FROM pg_catalog.pg_stat_activity
+				WHERE datname='{$database}'
+				ORDER BY waiting desc, current_query = '<IDLE>', usename, procpid";
 		}
 
 		return $this->selectSet($sql);
