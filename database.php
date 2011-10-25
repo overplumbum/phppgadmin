@@ -442,6 +442,10 @@
 				'field' => field('waiting'),
 				'type'  => 'yesno',
 			),
+			'client' => array(
+				'title' => 'Client',
+				'field' => field('client_addr'),
+			),
 			'user' => array(
 				'title' => $lang['strusername'],
 				'field' => field('usename'),
