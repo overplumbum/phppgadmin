@@ -5,7 +5,7 @@
 	 *
 	 * @maintainer Laurenz Albe &lt;laurenz.albe@wien.gv.at&gt;
 	 *
-     * $Id: german.php,v 1.28 2008/02/18 23:06:52 ioguix Exp $
+     * $Id: german.php,v 1.30 2008/02/18 23:06:51 ioguix Exp $
 	 */
 
 	// Language and character set
@@ -883,7 +883,7 @@
 	$lang['strnosubscriptions'] = 'Keine Abonnements gefunden.';
 
 	// Miscellaneous
-	$lang['strtopbar'] = '%s l&#228;uft auf %s:%s -- Sie sind als &quot;%s&quot; angemeldet, %s';
+	$lang['strtopbar'] = '%s l&#228;uft auf %s:%s -- Sie sind als &quot;%s&quot; angemeldet';
 	$lang['strtimefmt'] = 'D, j. n. Y, G:i';
 	$lang['strhelp'] = 'Hilfe';
 	$lang['strhelpicon'] = '?';
@@ -891,7 +891,7 @@
 	$lang['strselecthelppage'] = 'Hilfeseite ausw&#228;hlen';
 	$lang['strinvalidhelppage'] = 'Ung&#252;ltige Hilfeseite.';
 	$lang['strlogintitle'] = 'Bei %s anmelden';
-	$lang['strlogoutmsg'] = 'Von %s abgemendet';
+	$lang['strlogoutmsg'] = 'Von %s abgemeldet';
 	$lang['strloading'] = 'Lade...';
 	$lang['strerrorloading'] = 'Fehler beim Laden';
 	$lang['strclicktoreload'] = 'Klicken Sie zum Neuladen';

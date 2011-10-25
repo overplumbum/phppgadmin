@@ -66,6 +66,7 @@
 	$lang['strac'] = 'Povolit automatick&#233; dokon&#269;en&#237;';
 	$lang['strsave'] = 'Ulo&#382;it';
 	$lang['strreset'] = 'Resetovat';
+	$lang['strrestart'] = 'Restartovat';
 	$lang['strinsert'] = 'Vlo&#382;it';
 	$lang['strselect'] = 'Vybrat';
 	$lang['strdelete'] = 'Smazat';
@@ -435,6 +436,7 @@
 	$lang['strlastvalue'] = 'Posledn&#237; hodnota';
 	$lang['strincrementby'] = 'P&#345;&#237;r&#367;stek';	
 	$lang['strstartvalue'] = 'Po&#269;&#225;te&#269;n&#237; hodnota';
+	$lang['strrestartvalue'] = 'Nov&#225; po&#269;&#225;te&#269;n&#237; hodnota';
 	$lang['strmaxvalue'] = 'Max. hodnota';
 	$lang['strminvalue'] = 'Min. hodnota';
 	$lang['strcachevalue'] = 'P&#345;ipraveno dop&#345;edu';
@@ -447,6 +449,8 @@
 	$lang['strconfdropsequence'] = 'Opravdu chcete odstranit sekvenci &#8222;%s&#8220;?';
 	$lang['strsequencedropped'] = 'Sekvence byla odstran&#283;na.';
 	$lang['strsequencedroppedbad'] = 'Nezda&#345;ilo se odstranit sekvenci.';
+	$lang['strsequencerestart'] = 'Sekvence nastavena na novou po&#269;&#225;te&#269;n&#237; hodnotu.';
+	$lang['strsequencerestartbad'] = 'Nezda&#345;ilo se nastavit novou po&#269;&#225;te&#269;n&#237; hodnotu sekvence.';
 	$lang['strsequencereset'] = 'Sekvence byla nastavena na po&#269;&#225;te&#269;n&#237; hodnotu.';
 	$lang['strsequenceresetbad'] = 'Nezda&#345;ilo se nastavit po&#269;&#225;te&#269;n&#237; hodnotu sekvence.';
  	$lang['strsequencealtered'] = 'Zm&#283;ny v sekvenci byly provedeny.';
@@ -913,7 +917,7 @@
 	$lang['strnosubscriptions'] = 'Nebyly nalezeny &#382;&#225;dn&#233; odb&#283;ry.';
 
 	// Miscellaneous
-	$lang['strtopbar'] = '%s b&#283;&#382;&#237;c&#237; na %s:%s -- Jste p&#345;ihl&#225;&#353;en&#253; jako u&#382;ivatel &#8222;%s&#8220;, %s';
+	$lang['strtopbar'] = '%s b&#283;&#382;&#237;c&#237; na %s:%s -- Jste p&#345;ihl&#225;&#353;en&#253; jako u&#382;ivatel &#8222;%s&#8220;';
 	$lang['strtimefmt'] = 'j. M Y G:i';
 	$lang['strhelp'] = 'N&#225;pov&#283;da';
 	$lang['strhelpicon'] = '?';

@@ -43,7 +43,7 @@ class Postgres82 extends Postgres83 {
 		global $conf;
 
 		if (!$conf['show_system'])
-			$where = "AND pn.nspname NOT LIKE 'pg\\\\_%'";
+			$where = 'AND pn.nspname NOT LIKE $$pg\_%$$';
 		else
 			$where = "AND nspname !~ '^pg_t(emp_[0-9]+|oast)$'";
 
@@ -280,6 +280,41 @@ class Postgres82 extends Postgres83 {
 		}
 
 		return $this->execute($sql);
+	}
+
+	// Operator functions
+
+	/**
+	 * Returns all details for a particular operator
+	 * @param $operator_oid The oid of the operator
+	 * @return Function info
+	 */
+	function getOperator($operator_oid) {
+		$this->clean($operator_oid);
+
+		$sql = "
+			SELECT
+				po.oid, po.oprname,
+				oprleft::pg_catalog.regtype AS oprleftname,
+				oprright::pg_catalog.regtype AS oprrightname,
+				oprresult::pg_catalog.regtype AS resultname,
+				po.oprcanhash,
+				oprcom::pg_catalog.regoperator AS oprcom,
+				oprnegate::pg_catalog.regoperator AS oprnegate,
+				oprlsortop::pg_catalog.regoperator AS oprlsortop,
+				oprrsortop::pg_catalog.regoperator AS oprrsortop,
+				oprltcmpop::pg_catalog.regoperator AS oprltcmpop,
+				oprgtcmpop::pg_catalog.regoperator AS oprgtcmpop,
+				po.oprcode::pg_catalog.regproc AS oprcode,
+				po.oprrest::pg_catalog.regproc AS oprrest,
+				po.oprjoin::pg_catalog.regproc AS oprjoin
+			FROM
+				pg_catalog.pg_operator po
+			WHERE
+				po.oid='{$operator_oid}'
+		";
+
+		return $this->selectSet($sql);
 	}
 
 	// Operator Class functions

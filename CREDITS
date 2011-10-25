@@ -4,7 +4,7 @@ CREDITS
 Project Administration & Major Projects
 
 - Robert Treat
-- JGuillaume 'ioguix' De Rorthais
+- Jehan-Guillaume (ioguix) De Rorthais
 
 Translators
 
@@ -15,6 +15,8 @@ Translators
 - Chih-Hsin Lee (Trad. Chinese)
 - Hugo Jonker (Dutch)
 - Pascal Peyre (French)
+- Guillaume Lelarge (French)
+- ioguix (French)
 - H. Etzel, Markus Bertheau (German)
 - Kalef (Italian)
 - Tadashi Jokagi (Japanese)
@@ -41,10 +43,13 @@ Translators
 - Adamantios Diamantidis (Greek)
 - Marek ¿ernocký (Czech)
 - Alexey Baturin (Russian UTF8)
+- Adrián Chaves Fernández (Galician)
 
 Look & Feel
 
 - Davey (CSS)
+- ioguix (Cappuccino theme)
+- Tomasz Pala (Gotar theme)
 
 Contributors
 
@@ -70,12 +75,13 @@ Contributors
 - Tomasz Pala
 - Ivan Zolotukhin 
 - Kristoffer `spq` Janke
-- Leonardo Augusto Sapiras (Improve phpPgAdmin ergonomy during the GSoC 2010, with JGuillaume 'ioguix' De Rorthais as mentor)
+- Leonardo Augusto Sapiras (Improve phpPgAdmin ergonomy during the GSoC 2010, with ioguix as mentor)
 
 Third Party Libraries
 
 - Highlight.php (Jacob D. Cohen of rafb.net)
 - XLoadTree2 (Erik Arvidsson & Emil A Eklund of webfx.eae.net)
+- jQuery (http://jquery.com/)
 
 Corporate Sponsors
 
@@ -88,7 +94,7 @@ Project resources:
 Ongoing contributors:
 
 - Omniti ( http://omniti.com/ ) - sponsors developpment as Robert Treat employer
-- Dalibo ( http://dalibo.com ) - sponsors developpment as Jehan-Guillaume de Rorthais employer
+- Dalibo ( http://dalibo.com ) - sponsors developpment as Jehan-Guillaume (ioguix) de Rorthais employer
 
 Feature contributors:
 

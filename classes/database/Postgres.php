@@ -249,16 +249,15 @@ class Postgres extends ADODB_base {
 	 * @param $name The name to give the field
 	 * @param $value The value of the field.  Note this could be 'numeric(7,2)' sort of thing...
 	 * @param $type The database type of the field
-	 * @param $actions An array of javascript action name to the code to execute on that action
-	 * @param $extra Some extra attributes to add.
+	 * @param $extras An array of attributes name as key and attributes' values as value
 	 */
-	function printField($name, $value, $type, $actions = array(), $extra='') {
+	function printField($name, $value, $type, $extras = array()) {
 		global $lang;
 
 		// Determine actions string
-		$action_str = '';
-		foreach ($actions as $k => $v) {
-			$action_str .= " {$k}=\"" . htmlspecialchars($v) . "\"";
+		$extra_str = '';
+		foreach ($extras as $k => $v) {
+			$extra_str .= " {$k}=\"" . htmlspecialchars($v) . "\"";
 		}
 
 		switch (substr($type,0,9)) {
@@ -270,14 +269,14 @@ class Postgres extends ADODB_base {
 
 				// If value is null, 't' or 'f'...
 				if ($value === null || $value == 't' || $value == 'f') {
-					echo "<select name=\"", htmlspecialchars($name), "\"{$action_str}>\n";
+					echo "<select name=\"", htmlspecialchars($name), "\"{$extra_str}>\n";
 					echo "<option value=\"\"", ($value === null) ? ' selected="selected"' : '', "></option>\n";
 					echo "<option value=\"t\"", ($value == 't') ? ' selected="selected"' : '', ">{$lang['strtrue']}</option>\n";
 					echo "<option value=\"f\"", ($value == 'f') ? ' selected="selected"' : '', ">{$lang['strfalse']}</option>\n";
 					echo "</select>\n";
 				}
 				else {
-					echo "<input name=\"", htmlspecialchars($name), "\" value=\"", htmlspecialchars($value), "\" size=\"35\"{$action_str} {$extra} />\n";
+					echo "<input name=\"", htmlspecialchars($name), "\" value=\"", htmlspecialchars($value), "\" size=\"35\"{$extra_str} />\n";
 				}
 				break;
 			case 'bytea':
@@ -290,7 +289,7 @@ class Postgres extends ADODB_base {
 				$n = substr_count($value, "\n");
 				$n = $n < 5 ? 5 : $n;
 				$n = $n > 20 ? 20 : $n;
-				echo "<textarea name=\"", htmlspecialchars($name), "\" rows=\"{$n}\" cols=\"75\"{$action_str}>\n";
+				echo "<textarea name=\"", htmlspecialchars($name), "\" rows=\"{$n}\" cols=\"75\"{$extra_str}>\n";
 				echo htmlspecialchars($value);
 				echo "</textarea>\n";
 				break;
@@ -299,12 +298,12 @@ class Postgres extends ADODB_base {
 				$n = substr_count($value, "\n");
 				$n = $n < 5 ? 5 : $n;
 				$n = $n > 20 ? 20 : $n;
-				echo "<textarea name=\"", htmlspecialchars($name), "\" rows=\"{$n}\" cols=\"35\"{$action_str}>\n";
+				echo "<textarea name=\"", htmlspecialchars($name), "\" rows=\"{$n}\" cols=\"35\"{$extra_str}>\n";
 				echo htmlspecialchars($value);
 				echo "</textarea>\n";
 				break;
 			default:
-				echo "<input name=\"", htmlspecialchars($name), "\" value=\"", htmlspecialchars($value), "\" size=\"35\"{$action_str} {$extra} />\n";
+				echo "<input name=\"", htmlspecialchars($name), "\" value=\"", htmlspecialchars($value), "\" size=\"35\"{$extra_str} />\n";
 				break;
 		}
 	}
@@ -701,17 +700,25 @@ class Postgres extends ADODB_base {
 	function findObject($term, $filter) {
 		global $conf;
 
+		/*about escaping:
+		 * SET standard_conforming_string is not available before 8.2
+		 * So we must use PostgreSQL specific notation :/
+		 * E'' notation is not available before 8.1
+		 * $$ is available since 8.0
+		 * Nothing specific from 7.4
+		 **/
+
 		// Escape search term for ILIKE match
-		$term = str_replace('_', '\\_', $term);
-		$term = str_replace('%', '\\%', $term);
 		$this->clean($term);
 		$this->clean($filter);
+		$term = str_replace('_', '\_', $term);
+		$term = str_replace('%', '\%', $term);
 
 		// Exclude system relations if necessary
 		if (!$conf['show_system']) {
 			// XXX: The mention of information_schema here is in the wrong place, but
 			// it's the quickest fix to exclude the info schema from 7.4
-			$where = " AND pn.nspname NOT LIKE 'pg\\\\_%' AND pn.nspname != 'information_schema'";
+			$where = " AND pn.nspname NOT LIKE \$_PATERN_\$pg\_%\$_PATERN_\$ AND pn.nspname != 'information_schema'";
 			$lan_where = "AND pl.lanispl";
 		}
 		else {
@@ -725,20 +732,22 @@ class Postgres extends ADODB_base {
 			$sql = "SELECT * FROM (";
 		}
 
+		$term = "\$_PATERN_\$%{$term}%\$_PATERN_\$";
+
 		$sql .= "
 			SELECT 'SCHEMA' AS type, oid, NULL AS schemaname, NULL AS relname, nspname AS name
-				FROM pg_catalog.pg_namespace pn WHERE nspname ILIKE '%{$term}%' {$where}
+				FROM pg_catalog.pg_namespace pn WHERE nspname ILIKE {$term} {$where}
 			UNION ALL
 			SELECT CASE WHEN relkind='r' THEN 'TABLE' WHEN relkind='v' THEN 'VIEW' WHEN relkind='S' THEN 'SEQUENCE' END, pc.oid,
 				pn.nspname, NULL, pc.relname FROM pg_catalog.pg_class pc, pg_catalog.pg_namespace pn
-				WHERE pc.relnamespace=pn.oid AND relkind IN ('r', 'v', 'S') AND relname ILIKE '%{$term}%' {$where}
+				WHERE pc.relnamespace=pn.oid AND relkind IN ('r', 'v', 'S') AND relname ILIKE {$term} {$where}
 			UNION ALL
 			SELECT CASE WHEN pc.relkind='r' THEN 'COLUMNTABLE' ELSE 'COLUMNVIEW' END, NULL, pn.nspname, pc.relname, pa.attname FROM pg_catalog.pg_class pc, pg_catalog.pg_namespace pn,
 				pg_catalog.pg_attribute pa WHERE pc.relnamespace=pn.oid AND pc.oid=pa.attrelid
-				AND pa.attname ILIKE '%{$term}%' AND pa.attnum > 0 AND NOT pa.attisdropped AND pc.relkind IN ('r', 'v') {$where}
+				AND pa.attname ILIKE {$term} AND pa.attnum > 0 AND NOT pa.attisdropped AND pc.relkind IN ('r', 'v') {$where}
 			UNION ALL
 			SELECT 'FUNCTION', pp.oid, pn.nspname, NULL, pp.proname || '(' || pg_catalog.oidvectortypes(pp.proargtypes) || ')' FROM pg_catalog.pg_proc pp, pg_catalog.pg_namespace pn
-				WHERE pp.pronamespace=pn.oid AND NOT pp.proisagg AND pp.proname ILIKE '%{$term}%' {$where}
+				WHERE pp.pronamespace=pn.oid AND NOT pp.proisagg AND pp.proname ILIKE {$term} {$where}
 			UNION ALL
 			SELECT 'INDEX', NULL, pn.nspname, pc.relname, pc2.relname FROM pg_catalog.pg_class pc, pg_catalog.pg_namespace pn,
 				pg_catalog.pg_index pi, pg_catalog.pg_class pc2 WHERE pc.relnamespace=pn.oid AND pc.oid=pi.indrelid
@@ -748,7 +757,7 @@ class Postgres extends ADODB_base {
 					ON (d.refclassid = c.tableoid AND d.refobjid = c.oid)
 					WHERE d.classid = pc2.tableoid AND d.objid = pc2.oid AND d.deptype = 'i' AND c.contype IN ('u', 'p')
 				)
-				AND pc2.relname ILIKE '%{$term}%' {$where}
+				AND pc2.relname ILIKE {$term} {$where}
 			UNION ALL
 			SELECT 'CONSTRAINTTABLE', NULL, pn.nspname, pc.relname, pc2.conname FROM pg_catalog.pg_class pc, pg_catalog.pg_namespace pn,
 				pg_catalog.pg_constraint pc2 WHERE pc.relnamespace=pn.oid AND pc.oid=pc2.conrelid AND pc2.conrelid != 0
@@ -757,11 +766,11 @@ class Postgres extends ADODB_base {
 					ON (d.refclassid = c.tableoid AND d.refobjid = c.oid)
 					WHERE d.classid = pc2.tableoid AND d.objid = pc2.oid AND d.deptype = 'i' AND c.contype IN ('u', 'p')
 				) END
-				AND pc2.conname ILIKE '%{$term}%' {$where}
+				AND pc2.conname ILIKE {$term} {$where}
 			UNION ALL
 			SELECT 'CONSTRAINTDOMAIN', pt.oid, pn.nspname, pt.typname, pc.conname FROM pg_catalog.pg_type pt, pg_catalog.pg_namespace pn,
 				pg_catalog.pg_constraint pc WHERE pt.typnamespace=pn.oid AND pt.oid=pc.contypid AND pc.contypid != 0
-				AND pc.conname ILIKE '%{$term}%' {$where}
+				AND pc.conname ILIKE {$term} {$where}
 			UNION ALL
 			SELECT 'TRIGGER', NULL, pn.nspname, pc.relname, pt.tgname FROM pg_catalog.pg_class pc, pg_catalog.pg_namespace pn,
 				pg_catalog.pg_trigger pt WHERE pc.relnamespace=pn.oid AND pc.oid=pt.tgrelid
@@ -769,17 +778,17 @@ class Postgres extends ADODB_base {
 					(SELECT 1 FROM pg_catalog.pg_depend d JOIN pg_catalog.pg_constraint c
 					ON (d.refclassid = c.tableoid AND d.refobjid = c.oid)
 					WHERE d.classid = pt.tableoid AND d.objid = pt.oid AND d.deptype = 'i' AND c.contype = 'f'))
-				AND pt.tgname ILIKE '%{$term}%' {$where}
+				AND pt.tgname ILIKE {$term} {$where}
 			UNION ALL
 			SELECT 'RULETABLE', NULL, pn.nspname AS schemaname, c.relname AS tablename, r.rulename FROM pg_catalog.pg_rewrite r
 				JOIN pg_catalog.pg_class c ON c.oid = r.ev_class
 				LEFT JOIN pg_catalog.pg_namespace pn ON pn.oid = c.relnamespace
-				WHERE c.relkind='r' AND r.rulename != '_RETURN' AND r.rulename ILIKE '%{$term}%' {$where}
+				WHERE c.relkind='r' AND r.rulename != '_RETURN' AND r.rulename ILIKE {$term} {$where}
 			UNION ALL
 			SELECT 'RULEVIEW', NULL, pn.nspname AS schemaname, c.relname AS tablename, r.rulename FROM pg_catalog.pg_rewrite r
 				JOIN pg_catalog.pg_class c ON c.oid = r.ev_class
 				LEFT JOIN pg_catalog.pg_namespace pn ON pn.oid = c.relnamespace
-				WHERE c.relkind='v' AND r.rulename != '_RETURN' AND r.rulename ILIKE '%{$term}%' {$where}
+				WHERE c.relkind='v' AND r.rulename != '_RETURN' AND r.rulename ILIKE {$term} {$where}
 		";
 
 		// Add advanced objects if show_advanced is set
@@ -788,26 +797,26 @@ class Postgres extends ADODB_base {
 				UNION ALL
 				SELECT CASE WHEN pt.typtype='d' THEN 'DOMAIN' ELSE 'TYPE' END, pt.oid, pn.nspname, NULL,
 					pt.typname FROM pg_catalog.pg_type pt, pg_catalog.pg_namespace pn
-					WHERE pt.typnamespace=pn.oid AND typname ILIKE '%{$term}%'
+					WHERE pt.typnamespace=pn.oid AND typname ILIKE {$term}
 					AND (pt.typrelid = 0 OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = pt.typrelid))
 					{$where}
 			 	UNION ALL
 				SELECT 'OPERATOR', po.oid, pn.nspname, NULL, po.oprname FROM pg_catalog.pg_operator po, pg_catalog.pg_namespace pn
-					WHERE po.oprnamespace=pn.oid AND oprname ILIKE '%{$term}%' {$where}
+					WHERE po.oprnamespace=pn.oid AND oprname ILIKE {$term} {$where}
 				UNION ALL
 				SELECT 'CONVERSION', pc.oid, pn.nspname, NULL, pc.conname FROM pg_catalog.pg_conversion pc,
-					pg_catalog.pg_namespace pn WHERE pc.connamespace=pn.oid AND conname ILIKE '%{$term}%' {$where}
+					pg_catalog.pg_namespace pn WHERE pc.connamespace=pn.oid AND conname ILIKE {$term} {$where}
 				UNION ALL
 				SELECT 'LANGUAGE', pl.oid, NULL, NULL, pl.lanname FROM pg_catalog.pg_language pl
-					WHERE lanname ILIKE '%{$term}%' {$lan_where}
+					WHERE lanname ILIKE {$term} {$lan_where}
 				UNION ALL
 				SELECT DISTINCT ON (p.proname) 'AGGREGATE', p.oid, pn.nspname, NULL, p.proname FROM pg_catalog.pg_proc p
 					LEFT JOIN pg_catalog.pg_namespace pn ON p.pronamespace=pn.oid
-					WHERE p.proisagg AND p.proname ILIKE '%{$term}%' {$where}
+					WHERE p.proisagg AND p.proname ILIKE {$term} {$where}
 				UNION ALL
 				SELECT DISTINCT ON (po.opcname) 'OPCLASS', po.oid, pn.nspname, NULL, po.opcname FROM pg_catalog.pg_opclass po,
 					pg_catalog.pg_namespace pn WHERE po.opcnamespace=pn.oid
-					AND po.opcname ILIKE '%{$term}%' {$where}
+					AND po.opcname ILIKE {$term} {$where}
 			";
 		}
 		// Otherwise just add domains
@@ -816,7 +825,7 @@ class Postgres extends ADODB_base {
 				UNION ALL
 				SELECT 'DOMAIN', pt.oid, pn.nspname, NULL,
 					pt.typname FROM pg_catalog.pg_type pt, pg_catalog.pg_namespace pn
-					WHERE pt.typnamespace=pn.oid AND pt.typtype='d' AND typname ILIKE '%{$term}%'
+					WHERE pt.typnamespace=pn.oid AND pt.typtype='d' AND typname ILIKE {$term}
 					AND (pt.typrelid = 0 OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = pt.typrelid))
 					{$where}
 			";
@@ -862,10 +871,10 @@ class Postgres extends ADODB_base {
 		}
 		else $where = "WHERE nspname !~ '^pg_t(emp_[0-9]+|oast)$'";
 		$sql = "
-			SELECT pn.nspname, pu.usename AS nspowner,
+			SELECT pn.nspname, pu.rolname AS nspowner,
 				pg_catalog.obj_description(pn.oid, 'pg_namespace') AS nspcomment
 			FROM pg_catalog.pg_namespace pn
-				LEFT JOIN pg_catalog.pg_user pu ON (pn.nspowner = pu.usesysid)
+				LEFT JOIN pg_catalog.pg_roles pu ON (pn.nspowner = pu.oid)
 			{$where}
 			ORDER BY nspname";
 
@@ -883,7 +892,7 @@ class Postgres extends ADODB_base {
 			SELECT nspname, nspowner, r.rolname AS ownername, nspacl,
 				pg_catalog.obj_description(pn.oid, 'pg_namespace') as nspcomment
             FROM pg_catalog.pg_namespace pn
-            	LEFT JOIN pg_authid as r ON pn.nspowner = r.oid
+            	LEFT JOIN pg_roles as r ON pn.nspowner = r.oid
 			WHERE nspname='{$schema}'";
 		return $this->selectSet($sql);
 	}
@@ -3499,15 +3508,14 @@ class Postgres extends ADODB_base {
 	 * @return a recordset
 	 */
 	function getConstraintsWithFields($table) {
-		global $data;
 
 		$c_schema = $this->_schema;
 		$this->clean($c_schema);
-		$data->clean($table);
+		$this->clean($table);
 
 		// get the max number of col used in a constraint for the table
 		$sql = "SELECT DISTINCT
-			max(SUBSTRING(array_dims(c.conkey) FROM  E'^\\\[.*:(.*)\\\]$')) as nb
+			max(SUBSTRING(array_dims(c.conkey) FROM  \$patern\$^\\[.*:(.*)\\]$\$patern\$)) as nb
 		FROM pg_catalog.pg_constraint AS c
 			JOIN pg_catalog.pg_class AS r ON (c.conrelid=r.oid)
 			JOIN pg_catalog.pg_namespace AS ns ON (r.relnamespace=ns.oid)
@@ -3541,7 +3549,7 @@ class Postgres extends ADODB_base {
 				LEFT JOIN pg_catalog.pg_attribute AS f2 ON
 					(f2.attrelid=r2.oid AND ((c.confkey[1]=f2.attnum AND c.conkey[1]=f1.attnum)';
 		for ($i = 2; $i <= $rs->fields['nb']; $i++)
-			$sql.= "OR (c.confkey[$i]=f2.attnum AND c.conkey[$i]=f1.attnum)";
+			$sql.= " OR (c.confkey[$i]=f2.attnum AND c.conkey[$i]=f1.attnum)";
 
 		$sql .= sprintf("))
 			WHERE
@@ -4703,11 +4711,11 @@ class Postgres extends ADODB_base {
 		if ($conf['show_system'])
 			$where = '';
 		else
-			$where = "
-				AND n1.nspname NOT LIKE 'pg\\\\_%'
-				AND n2.nspname NOT LIKE 'pg\\\\_%'
-				AND n3.nspname NOT LIKE 'pg\\\\_%'
-			";
+			$where = '
+				AND n1.nspname NOT LIKE $$pg\_%$$
+				AND n2.nspname NOT LIKE $$pg\_%$$
+				AND n3.nspname NOT LIKE $$pg\_%$$
+			';
 
 		$sql = "
 			SELECT
@@ -5150,12 +5158,9 @@ class Postgres extends ADODB_base {
 				oprright::pg_catalog.regtype AS oprrightname,
 				oprresult::pg_catalog.regtype AS resultname,
 				po.oprcanhash,
+				oprcanmerge,
 				oprcom::pg_catalog.regoperator AS oprcom,
 				oprnegate::pg_catalog.regoperator AS oprnegate,
-				oprlsortop::pg_catalog.regoperator AS oprlsortop,
-				oprrsortop::pg_catalog.regoperator AS oprrsortop,
-				oprltcmpop::pg_catalog.regoperator AS oprltcmpop,
-				oprgtcmpop::pg_catalog.regoperator AS oprgtcmpop,
 				po.oprcode::pg_catalog.regproc AS oprcode,
 				po.oprrest::pg_catalog.regproc AS oprrest,
 				po.oprjoin::pg_catalog.regproc AS oprjoin
@@ -6968,7 +6973,7 @@ class Postgres extends ADODB_base {
 					FROM pg_catalog.pg_tablespace";
 
 		if (!$conf['show_system'] && !$all) {
-			$sql .= " WHERE spcname NOT LIKE 'pg\\\\_%'";
+			$sql .= ' WHERE spcname NOT LIKE $$pg\_%$$';
 		}
 
 		$sql .= " ORDER BY spcname";
@@ -7250,7 +7255,7 @@ class Postgres extends ADODB_base {
 		global $conf;
 
 		if (!$conf['show_system'])
-			$where = "AND pn.nspname NOT LIKE 'pg\\\\_%'";
+			$where = 'AND pn.nspname NOT LIKE $$pg\_%$$';
 		else
 			$where = "AND nspname !~ '^pg_t(emp_[0-9]+|oast)$'";
 
