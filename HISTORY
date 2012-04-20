@@ -1,46 +1,6 @@
 phpPgAdmin History
 ------------------
 
-
-Version 5.0.3
--------------
-
-Released: TBA
-
-Some bug fixes.
-
-* Fix bug with enable/disable triggers on multiple triggers (Dawid 'DeyV' Polak)
-
-
-Version 5.0.2
--------------
-
-Released: 3rd January 2011
-
-Some bug fixes.
-
-* Fix a css typo & error in cappuccino theme
-* Fix #3139003 "Autocomplete doesn't insert value", report and patch by Aleksander Machniak
-* Fix bad inheritance between pg83 -> pg instead of pg83 -> pg84 in the database access classes. This bug was breaking some functionnalities with 8.3
-* Fix a lot of nonstandard escaped string in the database access classes
-
-Version 5.0.1
--------------
-
-Released: 14th December 2010
-
-Minor bug fix and update version.
-
-* Fix #3124417 "Wrong german translation", reported by schnoesel
-* Fix (officialy) a bug where non-super user roles cannot check ownership on objects
-* Add forgotten Galician language to the target "all" of lang/Makefile
-* Update jQuery library to current stable 1.4.4
-* remove useless date from the topbar informations.
-  This was the only place that did PHP 5.3 complain about bad timezone configuration
-  (a non-PPA related warning). As it was a totaly useless information, we decide to
-  remove it.
-
-
 Version 5.0
 -----------
 
