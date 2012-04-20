@@ -1949,7 +1949,7 @@
 			
 			$grps['all'] = array(
 				'id' => 'all', 
-				'desc' => noEscape($lang['strallservers']),
+				'desc' => $lang['strallservers'],
 			);
 
 			include_once('./classes/ArrayRecordSet.php');

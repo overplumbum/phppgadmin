@@ -69,10 +69,6 @@ function value(&$var, &$fields, $esc = null) {
 	} else {
 		$val =& $var;
 	}
-    if (is_a($val, 'Decorator')) {
-        if (!$val->esc) $esc = null;
-        $val = $val->value(null);
-    }
 	if (is_string($val)) {
 		switch($esc) {
 			case 'xml':
